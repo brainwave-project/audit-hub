@@ -13,6 +13,7 @@
  */
 
 import { Kafka, type Consumer, type EachMessagePayload } from 'kafkajs';
+import { Prisma } from '@prisma/client';
 import { KAFKA_TOPICS, CONSUMER_GROUPS, type DomainEvent } from '@brainwave-project/core';
 import { prisma } from '../adapters/db/prisma/client.js';
 import { logger } from '../observability/logger.js';
@@ -50,7 +51,7 @@ async function persistEvent(topic: string, event: DomainEvent): Promise<void> {
         resourceName: event.resource?.name  ?? null,
         outcome:      event.outcome,
         correlationId: event.correlationId  ?? null,
-        metadata:     event.metadata        ?? undefined,
+        metadata:     (event.metadata as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
       },
     });
 

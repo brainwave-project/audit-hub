@@ -12,8 +12,8 @@ WORKDIR /app
 # OpenSSL is required by Prisma's query engine
 RUN apk add --no-cache openssl
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+COPY .npmrc package.json ./
+RUN npm install --omit=dev && rm .npmrc
 
 # ── Stage 2: builder ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -21,8 +21,8 @@ WORKDIR /app
 
 RUN apk add --no-cache openssl
 
-COPY package*.json tsconfig.json ./
-RUN npm ci
+COPY .npmrc package.json tsconfig.json ./
+RUN npm install && rm .npmrc
 
 COPY prisma ./prisma
 RUN npx prisma generate
@@ -34,15 +34,15 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-RUN apk add --no-cache openssl && \
+RUN apk add --no-cache openssl wget && \
     addgroup -S appgroup && \
     adduser  -S appuser -G appgroup
 
-COPY --from=deps    /app/node_modules ./node_modules
-COPY --from=builder /app/dist         ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY package.json ./
-COPY prisma ./prisma
+COPY --from=deps    --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/dist         ./dist
+COPY --from=builder --chown=appuser:appgroup /app/node_modules/.prisma ./node_modules/.prisma
+COPY --chown=appuser:appgroup package.json ./
+COPY --chown=appuser:appgroup prisma ./prisma
 
 USER appuser
 
