@@ -1,0 +1,40 @@
+// Audit-hub Prisma schema
+// Uses the `audit` schema in the shared Brainwave PostgreSQL instance.
+// The `audithub_app` role has only INSERT + SELECT on audit.audit_events
+// — enforcing append-only at the database permission level.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["audit"]
+}
+
+model AuditEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @unique @map("event_id") @db.Uuid
+  occurredAt    DateTime  @map("occurred_at") @db.Timestamptz(6)
+  actorId       String    @map("actor_id")
+  actorEmail    String?   @map("actor_email")
+  actorRoles    String[]  @map("actor_roles")
+  action        String
+  service       String
+  resourceType  String?   @map("resource_type")
+  resourceId    String?   @map("resource_id")
+  resourceName  String?   @map("resource_name")
+  outcome       String    @default("SUCCESS")
+  correlationId String?   @map("correlation_id")
+  metadata      Json?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([actorId, occurredAt])
+  @@index([action])
+  @@index([service])
+  @@index([occurredAt])
+  @@map("audit_events")
+  @@schema("audit")
+}
