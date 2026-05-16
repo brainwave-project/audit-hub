@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@brainwave-project/core": "^1.0.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.56.0",
     "@prisma/client": "^5.14.0",
     "dotenv": "^16.4.5",
     "express": "^4.22.1",
